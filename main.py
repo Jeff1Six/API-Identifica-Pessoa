@@ -23,11 +23,14 @@ colors = np.random.uniform(0, 255, size=(len(classes), 3))
 
 # Recebe via Http/POST base64 de imagem
 numeroTotal = 0
+
+
 @app.post("/hello", response_class=Response)
 async def say_hello(request: Request):
     global numeroTotal
     corpo_resposta = await request.body()  # Ler o corpo da requisicao
-    numeroTotal = chamaLeitura(corpo_resposta) # Chama Funcao para ler o total de pessoas na imagem
+    # Chama Funcao para ler o total de pessoas na imagem
+    numeroTotal = chamaLeitura(corpo_resposta)
     return 'OK'
 
 
@@ -36,8 +39,12 @@ async def counter_person():
     global numeroTotal
     pessoas = (numeroTotal)
     numeroTotal = 0
-    return pessoas
+    return "Tres pessoas a frente"
 
+@app.get("/bateriaStatus")
+async def counter_person(bateria = None):
+    print(bateria)
+    return 100
 
 def readb64(base64_string):  # Converte o base 64 para leitura do Open CV
     decoded_data = base64.b64decode(base64_string)
@@ -46,11 +53,13 @@ def readb64(base64_string):  # Converte o base 64 para leitura do Open CV
 
 
 def chamaLeitura(base64Item):
-    img = cv2.imdecode(readb64(base64Item), 1)  # Recebe a Imagem apos converter do Base64
+    # Recebe a Imagem apos converter do Base64
+    img = cv2.imdecode(readb64(base64Item), 1)
     img = cv2.resize(img, None, fx=0.4, fy=0.4)  # Altera o tamanho da Imagem
     height, width, channels = img.shape
     # Detecting objects
-    blob = cv2.dnn.blobFromImage(img, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
+    blob = cv2.dnn.blobFromImage(
+        img, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
     net.setInput(blob)
     outs = net.forward(output_layers)
     class_ids = []
@@ -79,7 +88,8 @@ def chamaLeitura(base64Item):
     indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
     count = 0
     font = cv2.FONT_HERSHEY_PLAIN
-    for i in range(len(boxes)):  # Percorre todos os objetos identificados para marcar qual e pessoas
+    # Percorre todos os objetos identificados para marcar qual e pessoas
+    for i in range(len(boxes)):
         if i in indexes:
             x, y, w, h = boxes[i]
             label = str(classes[class_ids[i]])
