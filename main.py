@@ -23,29 +23,44 @@ colors = np.random.uniform(0, 255, size=(len(classes), 3))
 
 # Recebe via Http/POST base64 de imagem
 numeroTotal = 0
+bateriaGlobal = 0
 
 
 @app.post("/hello", response_class=Response)
-async def say_hello(request: Request):
+async def say_hello(request: Request, bateria=None):
+    global bateriaGlobal
     global numeroTotal
     corpo_resposta = await request.body()  # Ler o corpo da requisicao
     # Chama Funcao para ler o total de pessoas na imagem
     numeroTotal = chamaLeitura(corpo_resposta)
+    if int(bateria) > int(bateriaGlobal):
+        bateriaGlobal = int(bateria)
+    print(numeroTotal)
     return 'OK'
 
 
 @app.get("/pessoas")
 async def counter_person():
     global numeroTotal
+    global bateriaGlobal
     pessoas = (numeroTotal)
     numeroTotal = 0
-    return "Tres pessoas a frente"
+    print(bateriaGlobal)
+    if int(pessoas) != 0 and int(bateriaGlobal) > 20:
+        return str(pessoas) + " pessoa a frente"
+    elif int(pessoas) == 0 and int(bateriaGlobal) <= 20:
+        return "Bateria Fraca"
+    elif int(pessoas) != 0 and int(bateriaGlobal) <= 20:
+        return str(pessoas) + " pessoa a frente ! Bateria Fraca"
+    
 
 @app.get("/bateriaStatus")
-async def counter_person(bateria = None):
-    print(bateria)
-    return 100
-
+async def counter_person(bateria=None):
+    global bateriaGlobal
+    if int(bateria) > int(bateriaGlobal):
+        bateriaGlobal = bateria
+        return 100
+ 
 def readb64(base64_string):  # Converte o base 64 para leitura do Open CV
     decoded_data = base64.b64decode(base64_string)
     np_data = np.fromstring(decoded_data, dtype=np.uint8)
